@@ -3,36 +3,37 @@
   <div id="app">
     <div class="top">
       <img src="./assets/kolibri-logo.svg" width="20%">
-      <h1>Possibly technical terms<br>in the Kolibri ecosystem</h1>
-      <p>Please add any terms that might have a technical definition or meaning.</p>
-      <p>These could be past or present, user-facing or internal.</p>
+      <h1>Audit of nomenclature<br>in the Kolibri ecosystem</h1>
+      <p>
+        Please add any terms that have a special meaning in the context of Kolibri.
+      </p>
+      <p>
+        The goal here is to audit all the technical language that we currently expose
+        to our users in Kolibri, Kolibri Studio, training materials, documentation,
+        and PR materials. After auditing all the technical terms we use, it will be
+        easier to cull the list and create a glossary and usage guide.
+      </p>
     </div>
 
     <div class="wrapper pure-g">
       <section class="pure-u-1-2">
         <h2>Add new term</h2>
-        <form class="pure-form">
+        <form class="pure-form" @submit.prevent="add">
           <div>
-            <input type="text"></input>
-            <button type="submit" class="pure-button">Add</button>
+            <input type="text" v-model="newName" @keyup.esc="newName = ''" autofocus></input>
+            <button type="submit" class="pure-button" :disabled="!canSubmit">Add</button>
           </div>
-          <p class="validation">(already added)</p>
+          <p class="validation" v-if="duplicate">(already added)</p>
         </form>
       </section>
       <section class="pure-u-1-2">
         <h2>Added terms</h2>
         <div>
           <ul>
-            <li>user <a href="#" title="Remove">✖</a></li>
-            <li>learner <a href="#" title="Remove">✖</a></li>
-            <li>admin <a href="#" title="Remove">✖</a></li>
-            <li>coach <a href="#" title="Remove">✖</a></li>
-            <li>device owner <a href="#" title="Remove">✖</a></li>
-            <li>superuser <a href="#" title="Remove">✖</a></li>
-            <li>facility <a href="#" title="Remove">✖</a></li>
-            <li>resource <a href="#" title="Remove">✖</a></li>
-            <li>content <a href="#" title="Remove">✖</a></li>
-            <li>exercise <a href="#" title="Remove">✖</a></li>
+            <li v-for="termObj, index in visibleList" :key="termObj['.key']">
+              <span>{{ termObj['.value'] }}</span>
+              <a @click.prevent="remove(termObj['.key'])" href="#" title="Remove">✖</a>
+            </li>
           </ul>
         </div>
       </section>
@@ -43,19 +44,57 @@
 
 
 <script>
-export default {
-  name: 'app',
-  data () {
-    return {}
+
+  import Firebase from 'firebase'
+  const config = {
+    apiKey: "AIzaSyA4VpWZgF80vNX-xOZj6exp5Bo8551SGNI",
+    authDomain: "kolibri-terms.firebaseapp.com",
+    databaseURL: "https://kolibri-terms.firebaseio.com",
+    projectId: "kolibri-terms",
+    storageBucket: "kolibri-terms.appspot.com",
+    messagingSenderId: "1068652692071"
+  };
+
   let app = Firebase.initializeApp(config)
   let db = app.database()
-  let booksRef = db.ref('books')
+  let termsRef = db.ref('kolibri-terms')
+
+  import sortBy from 'lodash/sortBy'
+  import find from 'lodash/find'
 
   export default {
     name: 'app',
     data () {
-      return {}
-    }
+      return {
+        newName: ''
+      }
+    },
+    computed: {
+      visibleList() {
+        return sortBy(this.terms, o => o['.value'])
+      },
+      duplicate() {
+        return find(this.terms, o => o['.value'] === this.cleaned)
+      },
+      canSubmit() {
+        return this.newName !== '' && !this.duplicate
+      },
+      cleaned() {
+        return this.newName.toLowerCase().trim()
+      }
+    },
+    methods: {
+      add() {
+        termsRef.push(this.cleaned)
+        this.newName = ''
+      },
+      remove(key) {
+        termsRef.child(key).remove()
+      }
+    },
+    firebase: {
+      terms: termsRef
+    },
   }
 
 </script>
@@ -70,11 +109,9 @@ export default {
     margin: 30px;
     text-align: center;
     margin: auto;
+    margin-top: 36px;
+    margin-bottom: 36px;
     max-width: 600px;
-  }
-
-  .top {
-    max-width:
   }
 
   h1, h2 {
@@ -90,8 +127,19 @@ export default {
     color: #42b983;
   }
 
+  @keyframes highlight {
+    0% {
+      background: #DECCE4;
+    }
+    100% {
+      background: none;
+    }
+  }
+
   li {
+    animation: highlight 1s;
     position: relative;
+    border-radius: 8px;
   }
 
   li a {
@@ -104,19 +152,13 @@ export default {
     top: -8px;
   }
 
-  /*li:hover {
+  li:hover {
     background-color: #EEE;
-  }*/
+  }
 
   li:hover a {
     text-decoration: none;
     visibility: visible;
-  }
-
-  input {
-  }
-
-  .wrapper {
   }
 
   .validation {
