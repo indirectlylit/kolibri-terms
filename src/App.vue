@@ -77,7 +77,7 @@
         return find(this.terms, o => o['.value'] === this.cleaned)
       },
       canSubmit() {
-        return this.newName !== '' && !this.duplicate
+        return this.cleaned !== '' && !this.duplicate
       },
       cleaned() {
         return this.newName.toLowerCase().trim()
